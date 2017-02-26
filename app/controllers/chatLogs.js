@@ -32,7 +32,7 @@ function calculatePriority(answers) {
 exports.index = (req, res, next) => {
   const messages = messageStorage.getAll();
 
-  const response = {};
+  const responses = [];
   let caseNumber = 1000;
 
   Object.keys(messages).forEach((key) => {
@@ -44,16 +44,30 @@ exports.index = (req, res, next) => {
     for (i = 0; i < questions.length; i++) {
       questions[i].answer = answers[i];
     }
-    response[key] = {
+    // find coordinates
+    let latitude;
+    let longitude;
+    const coordinates = messages[key].find((message) => {
+      return message.latitude && message.longitude;
+    });
+    if (coordinates) {
+      latitude = coordinates.latitude;
+      longitude = coordinates.longitude;
+    }
+    const response = {
+      id: key,
       caseNumber,
-      lastMessage: messages[key][messages[key].length - 1],
+      lastMessage: messages[key][messages[key].length - 1].message,
+      latitude,
+      longitude,
       timestamp: messages[key][messages[key].length - 1].timestamp,
       priority,
       chatLogs: messages[key],
       questions,
     };
+    responses.push(response);
     caseNumber = caseNumber + 1;
   });
 
-  res.json(response);
+  res.json(responses);
 };
